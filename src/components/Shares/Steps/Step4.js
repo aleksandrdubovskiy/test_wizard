@@ -11,14 +11,15 @@ const SortableTable = SortableContainer(({ children }) => {
     );
 });
 
-const SortableRow = SortableElement(({ children }) => {
+const SortableRow = SortableElement(({ children, onClick }) => {
     return (
-        <TableRow>{children}</TableRow>
+        <TableRow onClick={onClick}>{children}</TableRow>
     );
 });
 
 const Step4 = ({values, setFieldValue }) => {
     const [firstRow, setFirstRow] = useState([]);
+    const [users, setUsers] = useState([]);
     const data = values.sharesBlocks;
     const updatePosition = () => {
         const result = [];
@@ -37,6 +38,10 @@ const Step4 = ({values, setFieldValue }) => {
         data.splice(newIndex, 0, data.splice(oldIndex, 1)[0]);
         setFieldValue("sharesBlocks", [...data])
     };
+
+    const saveHandler = (val) => {
+        setFieldValue("sharesBlocks", [...data, val])
+    }
 
     return (
         <Box sx={{p: 5}}>
@@ -63,7 +68,7 @@ const Step4 = ({values, setFieldValue }) => {
                         <SortableRow key={item.positionStart} index={index}>
                             <TableCell key="a1">{firstRow[index]?.[0]} - {firstRow[index]?.[1]}</TableCell>
                             <TableCell key="a2">{item.shares}</TableCell>
-                            <TableCell key="a3">{item.className}</TableCell>
+                            <TableCell key="a3">{item.nameClass}</TableCell>
                             <TableCell key="a4">{item.shareholder}</TableCell>
                             <TableCell key="a5">
                                 {item.clauses.map(clause => (<Chip label={clause} key={clause}/>))}
@@ -72,10 +77,7 @@ const Step4 = ({values, setFieldValue }) => {
                     ))}
                 </SortableTable>
             </Table>
-            <ShareBlock data={values} />
-
-
-
+            <ShareBlock data={values} saveHandler={saveHandler} users={users} setUsers={setUsers} />
         </Box>
     )
 }

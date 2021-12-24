@@ -1,6 +1,7 @@
 import {Autocomplete, Box, Button, MenuItem, Modal, Select, TextField} from "@mui/material";
 import * as React from "react";
 import {useState} from "react";
+import NewUserModal from "./NewUserModal";
 
 const clauses = [
     {
@@ -27,10 +28,13 @@ const style = {
     pb: 3,
 };
 
-const ShareBlock = ({data, saveHandler}) => {
+const ShareBlock = ({data, saveHandler, users, setUsers}) => {
     const [open, setOpen] = useState(false);
     const [childOpen, setChildOpen] = useState(false);
-    const [modalData, setModalData] = useState({})
+    const [modalData, setModalData] = useState({
+        nameClass: data.sharesList?.[0]?.nameClass
+    })
+    const [selectedUsers, setSelectedUsers] = useState(users)
 
     const handleOpen = () => {
         setOpen(true);
@@ -57,7 +61,16 @@ const ShareBlock = ({data, saveHandler}) => {
             nameClass: event.target.value
         })
     }
+
+    const handleChange2 = (event, value) => {
+        setModalData({
+            ...modalData,
+            clauses: value.map(val => val.abbreviation)
+        })
+    }
+
     const hanleShareNumbersChange = (event) => {
+        console.log(modalData);
         const selecteClass = data.sharesList.find(item => item.nameClass === modalData.nameClass);
         setModalData({
             ...modalData,
@@ -65,7 +78,11 @@ const ShareBlock = ({data, saveHandler}) => {
         })
     }
 
+    const onChangeUserSelect = (e) => {
+        setSelectedUsers([...users.filter(user => `${user.firstName} ${user.lastName}`.indexOf(e.target.value) !== -1)]);
+    }
 
+console.log(selectedUsers, users);
     return (
         <div>
             <Button onClick={handleOpen}>Open modal</Button>
@@ -76,12 +93,37 @@ const ShareBlock = ({data, saveHandler}) => {
                 <Box sx={{ ...style, width: 400 }}>
                     <h2>Share block</h2>
 
-                    <Box>
-                        Shareholder
-                        <Button sx={{border: "1px solid #DDDDDD", borderRadius: 1, height: 50}} mb={2} onClick={setChildOpen}>
-                            {modalData.user?.name}
-                            {modalData.user?.id}
-                        </Button>
+                    <Box component="div">
+                        <div>Shareholder</div>
+                        <Box sx={{border: "1px solid #DDDDDD", borderRadius: 1, height: 50, width: "100%", display: "flex", alignItems: "center"}} mb={2} onClick={handleChildOpen}>
+                            {modalData.user ? (
+                                <>
+                                    {modalData.user.firstName}
+                                    {modalData.user.lastName}
+                                    {modalData.user.id}
+                                </>
+                            ): (
+                                <>
+                                    Choose shareholder
+                                </>
+                            )}
+
+                        </Box>
+                        {childOpen && (<div>
+                            <TextField onChange={onChangeUserSelect} placeholder="Search..."/>
+                            <div>
+                                {selectedUsers.map(user => (
+                                    <div onClick={() => {
+                                        setModalData({...modalData, user});
+                                        setChildOpen(false);
+                                    }}>
+                                        {user.firstName} {user.lastName} {user.id}
+                                    </div>
+                                ))}
+                            </div>
+
+                            <NewUserModal handleChildClose={handleChildClose} setUsers={setUsers} users={users} setSelected={(val) => setModalData({...modalData, user: val})}/>
+                        </div>)}
                     </Box>
                     <Box>
                         Number of shares
@@ -90,7 +132,7 @@ const ShareBlock = ({data, saveHandler}) => {
                             <Select
                                 id="shareName"
                                 name="shareName"
-                                value={modalData.nameClass || data.sharesList?.[0]?.nameClass}
+                                value={modalData.nameClass}
                                 onChange={handleChange}
                             >
                                 {data.sharesList?.map((item) => (
@@ -113,6 +155,7 @@ const ShareBlock = ({data, saveHandler}) => {
                             getOptionLabel={(option) => option.abbreviation}
                             defaultValue={[]}
                             filterSelectedOptions
+                            onChange={handleChange2}
                             renderInput={(params) => (
                                 <TextField
                                     {...params}
@@ -128,7 +171,6 @@ const ShareBlock = ({data, saveHandler}) => {
                     </Box>
                 </Box>
             </Modal>
-            {/*<ChildModal />*/}
         </div>
     )
 }

@@ -34,19 +34,19 @@ const initial = {
     sharesBlocks: [
         {
             shares: 199,
-            className: "Pref",
+            nameClass: "Pref",
             shareholder: "Name Namesson",
             clauses: ["RFR", "TAR"]
         },
         {
             shares: 5,
-            className: "Pref",
+            nameClass: "Pref",
             shareholder: "Name Namesson2",
             clauses: ["RFR", "TAR"]
         },
         {
             shares: 15,
-            className: "Pref",
+            nameClass: "Pref",
             shareholder: "Name Namesson2",
             clauses: ["RFR", "TAR"]
         }]
