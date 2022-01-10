@@ -3,6 +3,7 @@ import * as React from "react";
 import {useState} from "react";
 import * as Yup from "yup";
 import {useFormik} from "formik";
+import {duplicateUser, saveUser} from "./userStorage";
 
 const style = {
     position: 'absolute',
@@ -29,7 +30,14 @@ const initial = {
     postal2: ""
 }
 
-const NewUserModal = ({handleChildClose, users, setUsers, setSelected}) => {
+const errors = {
+    firstName: "username is duplicated",
+    lastName: "username is duplicated",
+    phone: "phone is duplicated",
+    email: "email is duplicated",
+}
+
+const NewUserModal = ({handleChildClose, setSelected}) => {
     const [open, setOpen] = useState(false)
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
@@ -52,11 +60,20 @@ const NewUserModal = ({handleChildClose, users, setUsers, setSelected}) => {
     const formik = useFormik({
         initialValues: initial,
         validationSchema: validation,
-        onSubmit: values => {
-            handleChildClose();
-            setUsers([...users, values])
-            setSelected(values)
-            console.log("SUBMIT", values);
+        onSubmit: (values, { setErrors, setFieldError }) => {
+            duplicateUser(values).then(async (result) => {
+                if (result.length) {
+                    const listErrors = result.reduce((acc,curr)=> (acc[curr]=errors[curr], acc),{});
+                    setErrors(listErrors);
+                } else {
+                    await saveUser(values);
+                    handleChildClose();
+                    setSelected(values)
+                    console.log("SUBMIT", values);
+                }
+            }).catch(() => {
+                handleChildClose();
+            })
         },
     });
 

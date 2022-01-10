@@ -5,6 +5,8 @@ import {makeStyles} from "@mui/styles";
 import "react-datepicker/dist/react-datepicker.css";
 import {FieldArray} from "formik";
 import ClassLine from "./ClassLine";
+import * as PropTypes from "prop-types";
+import {SharesStatus} from "./SharesStatus";
 
 const useStyles = makeStyles({
     title: {
@@ -15,6 +17,7 @@ const useStyles = makeStyles({
     }
 })
 
+SharesStatus.propTypes = {delta: PropTypes.number};
 const Step3 = ({values, errors, touched, handleBlur, handleChange, setContinue}) => {
     const shareItem = {
         nameClass: "",
@@ -56,12 +59,9 @@ const Step3 = ({values, errors, touched, handleBlur, handleChange, setContinue})
                         </Box>
 
                         <Box sx={{display: "flex", justifyContent: "space-between"}}>
-                            <Button variant="outlined" onClick={() => arrayHelpers.push(shareItem)}>Add share class</Button>
-                            <div>
-                                {delta > 0 && `${delta} shares for distributing`}
-                                {delta === 0 && "All shares distributed"}
-                                {delta < 0 && `Overusing ${delta} shares`}
-                            </div>
+                            <Button variant="outlined" onClick={() => arrayHelpers.push(shareItem)}>Add share
+                                class</Button>
+                            <SharesStatus delta={delta}/>
                         </Box>
                     </div>
                 )}

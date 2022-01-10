@@ -1,7 +1,8 @@
 import {Autocomplete, Box, Button, MenuItem, Modal, Select, TextField} from "@mui/material";
 import * as React from "react";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import NewUserModal from "./NewUserModal";
+import {getUsers} from "./userStorage";
 
 const clauses = [
     {
@@ -28,30 +29,42 @@ const style = {
     pb: 3,
 };
 
-const ShareBlock = ({data, saveHandler, users, setUsers}) => {
-    const [open, setOpen] = useState(false);
+const ShareBlock = ({data, sharesList, saveHandler, openedRecord, handleClose, open, mode}) => {
     const [childOpen, setChildOpen] = useState(false);
     const [modalData, setModalData] = useState({
-        nameClass: data.sharesList?.[0]?.nameClass
+        ...openedRecord
     })
-    const [selectedUsers, setSelectedUsers] = useState(users)
 
-    const handleOpen = () => {
-        setOpen(true);
-    };
-    const handleClose = () => {
-        setOpen(false);
-    };
+    async function getUsersList() {
+        const users = await getUsers();
+        setUsersList(users);
+    }
+
+    useEffect(() => {
+        if (mode === "new") {
+            openedRecord.nameClass = sharesList.find(shareItem => shareItem.shares > 0).nameClass;
+        }
+        setModalData({...openedRecord})
+    }, [openedRecord])
+
+    const [usersList, setUsersList] = useState([]);
+    useEffect(() => {
+        getUsersList();
+        setChildOpen(false);
+    }, [openedRecord])
+
 
     const handleChildOpen = () => {
+        getUsersList();
         setChildOpen(true);
+
     };
     const handleChildClose = () => {
         setChildOpen(false);
     };
 
     const handleSave = () => {
-        saveHandler(modalData);
+        saveHandler(modalData, mode);
         handleClose();
     }
 
@@ -71,21 +84,23 @@ const ShareBlock = ({data, saveHandler, users, setUsers}) => {
 
     const hanleShareNumbersChange = (event) => {
         console.log(modalData);
-        const selecteClass = data.sharesList.find(item => item.nameClass === modalData.nameClass);
+        const selecteClass = sharesList.find(item => item.nameClass === modalData.nameClass);
+        let max = selecteClass.shares;
+        if (openedRecord.nameClass === selecteClass.nameClass) {
+            max += openedRecord.shares;
+        }
         setModalData({
             ...modalData,
-            shares: (selecteClass.shares < event.target.value ? selecteClass.shares : event.target.value)
+            shares: (max < event.target.value ? max : +event.target.value)
         })
     }
 
-    const onChangeUserSelect = (e) => {
-        setSelectedUsers([...users.filter(user => `${user.firstName} ${user.lastName}`.indexOf(e.target.value) !== -1)]);
+    const onChangeUserSelect = async (e) => {
+        const users = await getUsers(e.target.value || "");
+        setUsersList(users);
     }
 
-console.log(selectedUsers, users);
     return (
-        <div>
-            <Button onClick={handleOpen}>Open modal</Button>
             <Modal
                 open={open}
                 onClose={handleClose}
@@ -95,7 +110,10 @@ console.log(selectedUsers, users);
 
                     <Box component="div">
                         <div>Shareholder</div>
-                        <Box sx={{border: "1px solid #DDDDDD", borderRadius: 1, height: 50, width: "100%", display: "flex", alignItems: "center"}} mb={2} onClick={handleChildOpen}>
+                        <Box sx={{border: "1px solid #DDDDDD", borderRadius: 1, height: 50, width: "100%", display: "flex", alignItems: "center"}}
+                             mb={2}
+                             onClick={() => {mode === "new" && handleChildOpen()}}
+                        >
                             {modalData.user ? (
                                 <>
                                     {modalData.user.firstName}
@@ -112,7 +130,7 @@ console.log(selectedUsers, users);
                         {childOpen && (<div>
                             <TextField onChange={onChangeUserSelect} placeholder="Search..."/>
                             <div>
-                                {selectedUsers.map(user => (
+                                {usersList.map(user => (
                                     <div onClick={() => {
                                         setModalData({...modalData, user});
                                         setChildOpen(false);
@@ -122,11 +140,12 @@ console.log(selectedUsers, users);
                                 ))}
                             </div>
 
-                            <NewUserModal handleChildClose={handleChildClose} setUsers={setUsers} users={users} setSelected={(val) => setModalData({...modalData, user: val})}/>
+                            <NewUserModal handleChildClose={handleChildClose} setSelected={(val) => setModalData({...modalData, user: val})}/>
                         </div>)}
                     </Box>
                     <Box>
                         Number of shares
+                        {modalData.nameClass}
                         <Box>
                             <TextField type="number" onChange={hanleShareNumbersChange} value={modalData.shares} />
                             <Select
@@ -135,7 +154,7 @@ console.log(selectedUsers, users);
                                 value={modalData.nameClass}
                                 onChange={handleChange}
                             >
-                                {data.sharesList?.map((item) => (
+                                {sharesList?.map((item) => (
                                     <MenuItem value={item.nameClass} key={item.nameClass}>
                                         <div style={{textAlign: "center"}}>
                                             <div>{item.nameClass}</div>
@@ -153,7 +172,7 @@ console.log(selectedUsers, users);
                             id="tags-outlined"
                             options={clauses}
                             getOptionLabel={(option) => option.abbreviation}
-                            defaultValue={[]}
+                            defaultValue={clauses.filter(clause => openedRecord.clauses.find(selectedClause => selectedClause === clause.abbreviation))}
                             filterSelectedOptions
                             onChange={handleChange2}
                             renderInput={(params) => (
@@ -171,7 +190,6 @@ console.log(selectedUsers, users);
                     </Box>
                 </Box>
             </Modal>
-        </div>
     )
 }
 
